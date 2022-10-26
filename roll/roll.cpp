@@ -1,12 +1,16 @@
 #include <algorithm>
 #include <iostream>
+#include <unordered_map>
 #include <numeric>
 #include <random>
 #include <regex>
 #include <stack>
+#include <sstream>
 #include <vector>
+#ifdef _DEBUG
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#endif
 
 std::random_device random_seed;
 std::default_random_engine random_engine(random_seed());
@@ -97,7 +101,7 @@ public:
 
         if (description)
         {
-            std::stringstream result;
+            std::stringstream result{};
             std::copy(rolls.begin(), rolls.end(), std::ostream_iterator<std::string>(result, " "));
 
             *description = result.str();
@@ -351,11 +355,13 @@ auto main(int argc, char* argv[]) -> int
         return 0;
     }
 
+#ifdef _DEBUG
     if (_stricmp(argv[1], "test") == 0)
     {
         ::testing::InitGoogleTest(&argc, argv);
         return RUN_ALL_TESTS();
     }
+#endif
 
     try
     {
@@ -375,6 +381,8 @@ auto main(int argc, char* argv[]) -> int
         std::cout << e.what() << "\n";
     }
 }
+
+#ifdef _DEBUG
 
 // TESTING
 
@@ -418,7 +426,7 @@ TEST_F(expression_evaluator_test, parse_3)
 
 TEST_F(expression_evaluator_test, convert_infix_to_prefix_1)
 {
-     auto result = eval.convert_infix_to_prefix(std::vector<std::string>{ "1", "+", "1" });
+    auto result = eval.convert_infix_to_prefix(std::vector<std::string>{ "1", "+", "1" });
     EXPECT_THAT(result, ContainerEq(std::vector<std::string>{ "1", "1", "+" }));
 }
 
@@ -492,7 +500,8 @@ TEST_F(expression_evaluator_test, roll_with_advantage)
     EXPECT_CALL(rng, generate(1, 20)).Times(2).WillOnce(Return(3)).WillOnce(Return(17));
     auto result = eval.evaluate("2d20b1", &description);
     EXPECT_THAT(result, Eq(17));
-    EXPECT_THAT(description, StrEq("(17, 3)")); // Note that this will always print the dropped dice after the good ones
+    EXPECT_THAT(description,
+                StrEq("(17, 3)"));   // Note that this will always print the dropped dice after the good ones
 }
 
 TEST_F(expression_evaluator_test, roll_with_disadvantage)
@@ -517,3 +526,5 @@ TEST_F(expression_evaluator_test, roll_4d6_keep_best_3)
     EXPECT_THAT(description,
                 StrEq("(3, 5, 6, 3)"));   // Note that this will always print the dropped dice after the good ones
 }
+
+#endif
