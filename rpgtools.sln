@@ -3,7 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "roll", "roll\roll.vcxproj", "{53A9DE09-F32B-4B9D-B5C8-190271A0D15B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "roll", "src\roll\roll.vcxproj", "{53A9DE09-F32B-4B9D-B5C8-190271A0D15B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rpgtools", "src\rpgtools\rpgtools.vcxproj", "{309F251D-79B3-47D2-B089-F788223D899D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tst", "tst", "{4B2B0A93-EC61-40A6-8ABF-F979E466CDA6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rpgtools_tests", "tst\rpgtools_tests\rpgtools_tests.vcxproj", "{A9DCE26C-9F78-4701-A126-07BDD2B500CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +23,22 @@ Global
 		{53A9DE09-F32B-4B9D-B5C8-190271A0D15B}.Debug|x64.Build.0 = Debug|x64
 		{53A9DE09-F32B-4B9D-B5C8-190271A0D15B}.Release|x64.ActiveCfg = Release|x64
 		{53A9DE09-F32B-4B9D-B5C8-190271A0D15B}.Release|x64.Build.0 = Release|x64
+		{309F251D-79B3-47D2-B089-F788223D899D}.Debug|x64.ActiveCfg = Debug|x64
+		{309F251D-79B3-47D2-B089-F788223D899D}.Debug|x64.Build.0 = Debug|x64
+		{309F251D-79B3-47D2-B089-F788223D899D}.Release|x64.ActiveCfg = Release|x64
+		{309F251D-79B3-47D2-B089-F788223D899D}.Release|x64.Build.0 = Release|x64
+		{A9DCE26C-9F78-4701-A126-07BDD2B500CE}.Debug|x64.ActiveCfg = Debug|x64
+		{A9DCE26C-9F78-4701-A126-07BDD2B500CE}.Debug|x64.Build.0 = Debug|x64
+		{A9DCE26C-9F78-4701-A126-07BDD2B500CE}.Release|x64.ActiveCfg = Release|x64
+		{A9DCE26C-9F78-4701-A126-07BDD2B500CE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{53A9DE09-F32B-4B9D-B5C8-190271A0D15B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{309F251D-79B3-47D2-B089-F788223D899D} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{A9DCE26C-9F78-4701-A126-07BDD2B500CE} = {4B2B0A93-EC61-40A6-8ABF-F979E466CDA6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7ECC8F24-74A8-4C80-A055-24176BA4ACCF}
