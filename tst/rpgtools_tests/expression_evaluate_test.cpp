@@ -124,7 +124,7 @@ TEST_F(evaluate_test, roll_4d6_keep_best_3)
                 StrEq("(3, 5, 6, 3)"));   // Note that this will always print the dropped dice after the good ones
 }
 
-TEST_F(evaluate_test, year_zero_table_d66)
+TEST_F(evaluate_test, year_zero_table_d66_manual)
 {
     EXPECT_CALL(rng, generate(1, 6)).Times(2).WillOnce(Return(4)).WillOnce(Return(2));
     auto result = eval.evaluate("(1d6*10)+1d6", &description);
@@ -132,10 +132,34 @@ TEST_F(evaluate_test, year_zero_table_d66)
     EXPECT_THAT(description, StrEq("(4) (2)"));
 }
 
-TEST_F(evaluate_test, year_zero_table_d666)
+TEST_F(evaluate_test, year_zero_table_d666_manual)
 {
     EXPECT_CALL(rng, generate(1, 6)).Times(3).WillOnce(Return(4)).WillOnce(Return(2)).WillOnce(Return(6));
     auto result = eval.evaluate("(1d6*100)+(1d6*10)+1d6", &description);
     EXPECT_THAT(result, Eq(426));
     EXPECT_THAT(description, StrEq("(4) (2) (6)"));
 }
+
+TEST_F(evaluate_test, year_zero_table_d66)
+{
+    EXPECT_CALL(rng, generate(1, 6)).Times(2).WillOnce(Return(4)).WillOnce(Return(2));
+    auto result = eval.evaluate("d66", &description);
+    EXPECT_THAT(result, Eq(42));
+    EXPECT_THAT(description, StrEq("(42)"));
+}
+
+TEST_F(evaluate_test, year_zero_table_d666)
+{
+    EXPECT_CALL(rng, generate(1, 6)).Times(3).WillOnce(Return(4)).WillOnce(Return(2)).WillOnce(Return(6));
+    auto result = eval.evaluate("d666", &description);
+    EXPECT_THAT(result, Eq(426));
+    EXPECT_THAT(description, StrEq("(426)"));
+}
+
+// TODO: d66 but choose the order of the dice
+// TODO: Exploding dice, ala Deadlands/Savage Worlds
+// TODO: Division with a round down ala raises in Savage Worlds
+// TODO: Count results higher than a certain value, ala 6 is success in year zero
+// TODO: Support different kinds of dice, like 2d6[attribute]3d6[skill]4d6[stress]
+// TODO: Support no sums
+// TODO: Make aliases for common rolls (similar to what d66/d666 are)

@@ -87,24 +87,42 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
 
     auto num_rolls = match[1].str().empty() ? 1 : std::stoi(match[1].str());
     auto dice_size = std::stoi(match[2].str());
-    auto keeping_mode = get_keeping_mode(match[3].str());
-    auto keeping_count = match[4].str().empty() ? 0 : std::stoi(match[4].str());
+    auto selection_mode = get_keeping_mode(match[3].str());
+    auto selection_count = match[4].str().empty() ? 0 : std::stoi(match[4].str());
 
     std::vector<int> dice_rolls;
     for (auto i = 0; i < num_rolls; ++i)
     {
-        dice_rolls.emplace_back(rng_->generate(1, dice_size));
+        int result{ 0 };
+        switch (dice_size)
+        {
+        case 666:
+            result = rng_->generate(1, 6) * 100;
+            result += rng_->generate(1, 6) * 10;
+            result += rng_->generate(1, 6);
+            dice_rolls.emplace_back(result);
+            break;
+
+        case 66:
+            result = rng_->generate(1, 6) * 10;
+            result += rng_->generate(1, 6);
+            dice_rolls.emplace_back(result);
+            break;
+
+        default:
+            dice_rolls.emplace_back(rng_->generate(1, dice_size));
+        }
     }
 
     int result{};
     std::vector<int> dropped_dice_rolls;
-    switch (keeping_mode)
+    switch (selection_mode)
     {
-    case keeping_mode::all:
+    case dice_selection_mode::all:
         break;
 
-    case keeping_mode::best:
-        while (dice_rolls.size() > keeping_count)
+    case dice_selection_mode::best:
+        while (dice_rolls.size() > selection_count)
         {
             auto smallest = std::min_element(dice_rolls.begin(), dice_rolls.end());
             dropped_dice_rolls.push_back(*smallest);
@@ -112,8 +130,8 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
         }
         break;
 
-    case keeping_mode::worst:
-        while (dice_rolls.size() > keeping_count)
+    case dice_selection_mode::worst:
+        while (dice_rolls.size() > selection_count)
         {
             auto largest = std::max_element(dice_rolls.begin(), dice_rolls.end());
             dropped_dice_rolls.push_back(*largest);
@@ -197,20 +215,20 @@ expression_evaluator::token_type expression_evaluator::get_token_type(const std:
     throw std::runtime_error("Unexpected token type: " + token);
 }
 
-expression_evaluator::keeping_mode expression_evaluator::get_keeping_mode(const std::string& m)
+expression_evaluator::dice_selection_mode expression_evaluator::get_keeping_mode(const std::string& m)
 {
     if (m.empty())
     {
-        return keeping_mode::all;
+        return dice_selection_mode::all;
     }
 
     switch (std::tolower(m[0]))
     {
     case 'b':
-        return keeping_mode::best;
+        return dice_selection_mode::best;
 
     case 'w':
-        return keeping_mode::worst;
+        return dice_selection_mode::worst;
 
     default:
         throw std::runtime_error("Invalid dice modifier: " + m);

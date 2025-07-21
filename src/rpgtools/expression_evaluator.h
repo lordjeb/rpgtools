@@ -32,7 +32,7 @@ class expression_evaluator
 
 public:
     enum class token_type { number, operation, left_parenthesis, right_parenthesis, dice_expression };
-    enum class keeping_mode { all, best, worst };
+    enum class dice_selection_mode { all, best, worst };
 
     expression_evaluator(random_number_generator* rng);
 
@@ -40,7 +40,7 @@ public:
     int evaluate_dice_expression(const std::string& token, std::vector<std::string>& rolls);
     void evaluate_operation(std::stack<int>& stack, const std::string& token);
     token_type get_token_type(const std::string& token);
-    keeping_mode get_keeping_mode(const std::string& m);
+    dice_selection_mode get_keeping_mode(const std::string& m);
     std::vector<std::string> parse(const std::string expression);
     std::vector<std::string> convert_infix_to_prefix(const std::vector<std::string>& tokens);
 };
