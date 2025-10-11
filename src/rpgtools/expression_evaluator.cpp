@@ -78,7 +78,7 @@ int expression_evaluator::evaluate(const std::string expression, std::string* de
 
 int expression_evaluator::evaluate_dice_expression(const std::string& token, std::vector<std::string>& rolls)
 {
-    const std::regex expr{ "(\\d*)[dD](\\d+)([bBwW]?)(\\d*)" };
+    const std::regex expr{ "(\\d*)[dD](\\d+)(!)?(([bBwW])(\\d*))?" };
     std::smatch match;
     if (!std::regex_match(token, match, expr))
     {
@@ -87,35 +87,69 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
 
     auto num_rolls = match[1].str().empty() ? 1 : std::stoi(match[1].str());
     auto dice_size = std::stoi(match[2].str());
-    auto selection_mode = get_keeping_mode(match[3].str());
-    auto selection_count = match[4].str().empty() ? 0 : std::stoi(match[4].str());
+    auto is_exploding = !match[3].str().empty();
+    auto selection_mode = get_keeping_mode(match[5].str());
+    auto selection_count = match[6].str().empty() ? 0 : std::stoi(match[6].str());
 
     std::vector<int> dice_rolls;
+    std::vector<std::vector<int>> exploded_rolls; // To track individual explosions for description
+    
     for (auto i = 0; i < num_rolls; ++i)
     {
-        int result{ 0 };
+        std::vector<int> individual_exploded_rolls;
+        int total_result = 0;
+        
         switch (dice_size)
         {
         case 666:
-            result = rng_->generate(1, 6) * 100;
-            result += rng_->generate(1, 6) * 10;
-            result += rng_->generate(1, 6);
-            dice_rolls.emplace_back(result);
+            {
+                int result = rng_->generate(1, 6) * 100;
+                result += rng_->generate(1, 6) * 10;
+                result += rng_->generate(1, 6);
+                total_result = result;
+                individual_exploded_rolls.push_back(result);
+                // Note: Exploding dice logic doesn't apply to special dice like d666/d66
+            }
             break;
 
         case 66:
-            result = rng_->generate(1, 6) * 10;
-            result += rng_->generate(1, 6);
-            dice_rolls.emplace_back(result);
+            {
+                int result = rng_->generate(1, 6) * 10;
+                result += rng_->generate(1, 6);
+                total_result = result;
+                individual_exploded_rolls.push_back(result);
+                // Note: Exploding dice logic doesn't apply to special dice like d666/d66
+            }
             break;
 
         default:
-            dice_rolls.emplace_back(rng_->generate(1, dice_size));
+            {
+                int roll = rng_->generate(1, dice_size);
+                total_result = roll;
+                individual_exploded_rolls.push_back(roll);
+                
+                // Handle exploding dice
+                if (is_exploding)
+                {
+                    while (roll == dice_size)
+                    {
+                        roll = rng_->generate(1, dice_size);
+                        total_result += roll;
+                        individual_exploded_rolls.push_back(roll);
+                    }
+                }
+            }
+            break;
         }
+        
+        dice_rolls.emplace_back(total_result);
+        exploded_rolls.emplace_back(individual_exploded_rolls);
     }
 
     int result{};
     std::vector<int> dropped_dice_rolls;
+    std::vector<std::vector<int>> dropped_exploded_rolls; // Track explosion details for dropped dice
+    
     switch (selection_mode)
     {
     case dice_selection_mode::all:
@@ -125,8 +159,13 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
         while (dice_rolls.size() > selection_count)
         {
             auto smallest = std::min_element(dice_rolls.begin(), dice_rolls.end());
+            auto smallest_index = std::distance(dice_rolls.begin(), smallest);
+            
             dropped_dice_rolls.push_back(*smallest);
+            dropped_exploded_rolls.push_back(exploded_rolls[smallest_index]);
+            
             dice_rolls.erase(smallest);
+            exploded_rolls.erase(exploded_rolls.begin() + smallest_index);
         }
         break;
 
@@ -134,8 +173,13 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
         while (dice_rolls.size() > selection_count)
         {
             auto largest = std::max_element(dice_rolls.begin(), dice_rolls.end());
+            auto largest_index = std::distance(dice_rolls.begin(), largest);
+            
             dropped_dice_rolls.push_back(*largest);
+            dropped_exploded_rolls.push_back(exploded_rolls[largest_index]);
+            
             dice_rolls.erase(largest);
+            exploded_rolls.erase(exploded_rolls.begin() + largest_index);
         }
         break;
 
@@ -147,14 +191,52 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
 
     std::stringstream roll_description_stream;
     roll_description_stream << '(';
-    std::copy(dice_rolls.begin(), dice_rolls.end(), std::ostream_iterator<int>(roll_description_stream, ", "));
-    std::copy(dropped_dice_rolls.begin(), dropped_dice_rolls.end(),
-              std::ostream_iterator<int>(roll_description_stream, ", "));
+    
+    for (size_t i = 0; i < dice_rolls.size(); ++i)
+    {
+        if (i > 0) roll_description_stream << ", ";
+        
+        if (is_exploding && exploded_rolls[i].size() > 1)
+        {
+            // Show exploding dice as [roll1+roll2+...]
+            roll_description_stream << '[';
+            for (size_t j = 0; j < exploded_rolls[i].size(); ++j)
+            {
+                if (j > 0) roll_description_stream << '+';
+                roll_description_stream << exploded_rolls[i][j];
+            }
+            roll_description_stream << ']';
+        }
+        else
+        {
+            roll_description_stream << dice_rolls[i];
+        }
+    }
+    
+    // Add dropped dice to description
+    for (size_t i = 0; i < dropped_dice_rolls.size(); ++i)
+    {
+        roll_description_stream << ", ";
+        
+        if (is_exploding && dropped_exploded_rolls[i].size() > 1)
+        {
+            // Show exploding dice as [roll1+roll2+...]
+            roll_description_stream << '[';
+            for (size_t j = 0; j < dropped_exploded_rolls[i].size(); ++j)
+            {
+                if (j > 0) roll_description_stream << '+';
+                roll_description_stream << dropped_exploded_rolls[i][j];
+            }
+            roll_description_stream << ']';
+        }
+        else
+        {
+            roll_description_stream << dropped_dice_rolls[i];
+        }
+    }
 
+    roll_description_stream << ')';
     auto roll_description = roll_description_stream.str();
-    roll_description.pop_back();
-    roll_description.pop_back();
-    roll_description.push_back(')');
 
     rolls.emplace_back(roll_description);
 
@@ -237,7 +319,7 @@ expression_evaluator::dice_selection_mode expression_evaluator::get_keeping_mode
 
 std::vector<std::string> expression_evaluator::parse(const std::string expression)
 {
-    const std::regex expr{ R"(([0-9dbw]+|[\+\(\)\*-]))" };
+    const std::regex expr{ R"(([0-9dbw!]+|[\+\(\)\*-]))" };
     const std::sregex_iterator rend;
     std::sregex_iterator rit(expression.begin(), expression.end(), expr);
     std::vector<std::string> tokens;

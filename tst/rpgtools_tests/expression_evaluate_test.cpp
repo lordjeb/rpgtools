@@ -156,8 +156,81 @@ TEST_F(evaluate_test, year_zero_table_d666)
     EXPECT_THAT(description, StrEq("(426)"));
 }
 
+// Exploding dice tests
+TEST_F(evaluate_test, simple_exploding_d6_no_explosion)
+{
+    EXPECT_CALL(rng, generate(1, 6)).Times(1).WillOnce(Return(4));
+    auto result = eval.evaluate("d6!", &description);
+    EXPECT_THAT(result, Eq(4));
+    EXPECT_THAT(description, StrEq("(4)"));
+}
+
+TEST_F(evaluate_test, simple_exploding_d6_single_explosion)
+{
+    EXPECT_CALL(rng, generate(1, 6)).Times(2).WillOnce(Return(6)).WillOnce(Return(3));
+    auto result = eval.evaluate("d6!", &description);
+    EXPECT_THAT(result, Eq(9));
+    EXPECT_THAT(description, StrEq("([6+3])"));
+}
+
+TEST_F(evaluate_test, simple_exploding_d6_multiple_explosions)
+{
+    EXPECT_CALL(rng, generate(1, 6)).Times(4).WillOnce(Return(6)).WillOnce(Return(6)).WillOnce(Return(6)).WillOnce(Return(2));
+    auto result = eval.evaluate("d6!", &description);
+    EXPECT_THAT(result, Eq(20));
+    EXPECT_THAT(description, StrEq("([6+6+6+2])"));
+}
+
+TEST_F(evaluate_test, multiple_exploding_d6_mixed_results)
+{
+    EXPECT_CALL(rng, generate(1, 6)).Times(3).WillOnce(Return(3)).WillOnce(Return(6)).WillOnce(Return(4));
+    auto result = eval.evaluate("2d6!", &description);
+    EXPECT_THAT(result, Eq(13));
+    EXPECT_THAT(description, StrEq("(3, [6+4])"));
+}
+
+TEST_F(evaluate_test, exploding_d20_single_explosion)
+{
+    EXPECT_CALL(rng, generate(1, 20)).Times(2).WillOnce(Return(20)).WillOnce(Return(15));
+    auto result = eval.evaluate("d20!", &description);
+    EXPECT_THAT(result, Eq(35));
+    EXPECT_THAT(description, StrEq("([20+15])"));
+}
+
+TEST_F(evaluate_test, exploding_dice_with_advantage)
+{
+    EXPECT_CALL(rng, generate(1, 20)).Times(3).WillOnce(Return(20)).WillOnce(Return(5)).WillOnce(Return(18));
+    auto result = eval.evaluate("2d20!b1", &description);
+    EXPECT_THAT(result, Eq(25));  // Best of [20+5]=25 and 18
+    EXPECT_THAT(description, StrEq("([20+5], 18)"));
+}
+
+TEST_F(evaluate_test, non_exploding_vs_exploding_comparison)
+{
+    {
+        EXPECT_CALL(rng, generate(1, 6)).Times(1).WillOnce(Return(4));
+        auto result1 = eval.evaluate("d6", &description);
+        EXPECT_THAT(result1, Eq(4));
+        EXPECT_THAT(description, StrEq("(4)"));
+    }
+    
+    {
+        EXPECT_CALL(rng, generate(1, 6)).Times(2).WillOnce(Return(6)).WillOnce(Return(3));
+        auto result2 = eval.evaluate("d6!", &description);
+        EXPECT_THAT(result2, Eq(9));
+        EXPECT_THAT(description, StrEq("([6+3])"));
+    }
+}
+
+TEST_F(evaluate_test, exploding_dice_dropped_show_explosions)
+{
+    EXPECT_CALL(rng, generate(1, 6)).Times(4).WillOnce(Return(6)).WillOnce(Return(3)).WillOnce(Return(2)).WillOnce(Return(4));
+    auto result = eval.evaluate("3d6!b1", &description);
+    EXPECT_THAT(result, Eq(9));  // Best of [6+3]=9, 2, and 4
+    EXPECT_THAT(description, StrEq("([6+3], 2, 4)"));
+}
+
 // TODO: d66 but choose the order of the dice
-// TODO: Exploding dice, ala Deadlands/Savage Worlds
 // TODO: Division with a round down ala raises in Savage Worlds
 // TODO: Count results higher than a certain value, ala 6 is success in year zero
 // TODO: Support different kinds of dice, like 2d6[attribute]3d6[skill]4d6[stress]
