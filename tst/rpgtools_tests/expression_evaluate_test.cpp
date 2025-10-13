@@ -63,7 +63,7 @@ TEST_F(evaluate_test, order_of_operations_1)
 TEST_F(evaluate_test, order_of_operations_2)
 {
     EXPECT_CALL(rng, generate(_, _)).Times(0);
-    auto result = eval.evaluate("3+4*8", &description); // Bad L2R math will do 7*8 == 56
+    auto result = eval.evaluate("3+4*8", &description);   // Bad L2R math will do 7*8 == 56
     EXPECT_THAT(result, Eq(35));
     EXPECT_THAT(description, StrEq(""));
 }
@@ -175,7 +175,12 @@ TEST_F(evaluate_test, simple_exploding_d6_single_explosion)
 
 TEST_F(evaluate_test, simple_exploding_d6_multiple_explosions)
 {
-    EXPECT_CALL(rng, generate(1, 6)).Times(4).WillOnce(Return(6)).WillOnce(Return(6)).WillOnce(Return(6)).WillOnce(Return(2));
+    EXPECT_CALL(rng, generate(1, 6))
+        .Times(4)
+        .WillOnce(Return(6))
+        .WillOnce(Return(6))
+        .WillOnce(Return(6))
+        .WillOnce(Return(2));
     auto result = eval.evaluate("d6!", &description);
     EXPECT_THAT(result, Eq(20));
     EXPECT_THAT(description, StrEq("([6+6+6+2])"));
@@ -201,7 +206,7 @@ TEST_F(evaluate_test, exploding_dice_with_advantage)
 {
     EXPECT_CALL(rng, generate(1, 20)).Times(3).WillOnce(Return(20)).WillOnce(Return(5)).WillOnce(Return(18));
     auto result = eval.evaluate("2d20!b1", &description);
-    EXPECT_THAT(result, Eq(25));  // Best of [20+5]=25 and 18
+    EXPECT_THAT(result, Eq(25));   // Best of [20+5]=25 and 18
     EXPECT_THAT(description, StrEq("([20+5], 18)"));
 }
 
@@ -213,7 +218,7 @@ TEST_F(evaluate_test, non_exploding_vs_exploding_comparison)
         EXPECT_THAT(result1, Eq(4));
         EXPECT_THAT(description, StrEq("(4)"));
     }
-    
+
     {
         EXPECT_CALL(rng, generate(1, 6)).Times(2).WillOnce(Return(6)).WillOnce(Return(3));
         auto result2 = eval.evaluate("d6!", &description);
@@ -224,15 +229,21 @@ TEST_F(evaluate_test, non_exploding_vs_exploding_comparison)
 
 TEST_F(evaluate_test, exploding_dice_dropped_show_explosions)
 {
-    EXPECT_CALL(rng, generate(1, 6)).Times(4).WillOnce(Return(6)).WillOnce(Return(3)).WillOnce(Return(2)).WillOnce(Return(4));
+    EXPECT_CALL(rng, generate(1, 6))
+        .Times(4)
+        .WillOnce(Return(6))
+        .WillOnce(Return(3))
+        .WillOnce(Return(2))
+        .WillOnce(Return(4));
     auto result = eval.evaluate("3d6!b1", &description);
-    EXPECT_THAT(result, Eq(9));  // Best of [6+3]=9, 2, and 4
+    EXPECT_THAT(result, Eq(9));   // Best of [6+3]=9, 2, and 4
     EXPECT_THAT(description, StrEq("([6+3], 2, 4)"));
 }
 
-// TODO: d66 but choose the order of the dice
+// TODO: Evaluate with a target number with the total
 // TODO: Division with a round down ala raises in Savage Worlds
 // TODO: Count results higher than a certain value, ala 6 is success in year zero
 // TODO: Support different kinds of dice, like 2d6[attribute]3d6[skill]4d6[stress]
 // TODO: Support no sums
 // TODO: Make aliases for common rolls (similar to what d66/d666 are)
+// TODO: Support loading an alias list from a json file so you could do roll.exe fighting or roll.exe stress

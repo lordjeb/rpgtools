@@ -91,13 +91,17 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
     auto selection_mode = get_keeping_mode(match[5].str());
     auto selection_count = match[6].str().empty() ? 0 : std::stoi(match[6].str());
 
+    //
+    // Roll the dice
+    //
+
     std::vector<int> dice_rolls;
     std::vector<std::vector<int>> exploded_rolls; // To track individual explosions for description
     
     for (auto i = 0; i < num_rolls; ++i)
     {
         std::vector<int> individual_exploded_rolls;
-        int total_result = 0;
+        int total_result{ 0 };
         
         switch (dice_size)
         {
@@ -146,7 +150,10 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
         exploded_rolls.emplace_back(individual_exploded_rolls);
     }
 
-    int result{};
+    //
+    // Select the dice to keep or drop
+    //
+
     std::vector<int> dropped_dice_rolls;
     std::vector<std::vector<int>> dropped_exploded_rolls; // Track explosion details for dropped dice
     
@@ -187,7 +194,15 @@ int expression_evaluator::evaluate_dice_expression(const std::string& token, std
         throw std::runtime_error("Invalid dice modifier: " + match[3].str());
     }
 
-    result = std::accumulate(dice_rolls.begin(), dice_rolls.end(), 0);
+    //
+    // Calculate the total result
+    //
+
+    auto result = std::accumulate(dice_rolls.begin(), dice_rolls.end(), 0);
+
+    //
+    // Build the roll description string
+    //
 
     std::stringstream roll_description_stream;
     roll_description_stream << '(';
